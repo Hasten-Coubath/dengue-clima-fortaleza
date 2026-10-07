@@ -1,0 +1,30 @@
+# Ambiente virtual
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Dados 
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Modelos treinados
+models/*
+!models/.gitkeep
+
+# Variáveis de ambiente / segredos
+.env
+
+# Sistema e editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
