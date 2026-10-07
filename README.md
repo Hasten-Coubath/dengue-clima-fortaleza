@@ -1,32 +1,59 @@
-# Dengue x Clima em Fortaleza
+# Radar Hospitalar CE
 
-Projeto de Machine Learning que investiga a relação entre variáveis climáticas (chuva, temperatura e umidade) e o número de casos de dengue em Fortaleza – CE, com o objetivo de **prever a quantidade de casos semanais** a partir das condições climáticas das semanas anteriores.
+Pipeline de dados automatizado que monitora a **pressão sobre a rede hospitalar do SUS no Ceará**, a partir de dados públicos do DATASUS. O pipeline coleta, trata e analisa os dados de internações e de leitos mês a mês, sem intervenção manual, gerando indicadores e relatórios atualizados a cada nova publicação.
 
 ## Pergunta central
 
-> É possível antecipar surtos de dengue em Fortaleza usando dados climáticos das semanas anteriores?
+> Como está evoluindo, mês a mês, a pressão sobre a rede hospitalar do SUS no Ceará, e onde ela está concentrada?
 
-A dengue tem forte componente sazonal: chuva e calor favorecem a reprodução do *Aedes aegypti*, mas o efeito no número de casos aparece com **atraso** de algumas semanas. Entender e modelar esse atraso é o centro do projeto.
+A demanda hospitalar não fica restrita ao município onde o paciente mora: muitos precisam se deslocar para cidades-polo em busca de atendimento, o que sobrecarrega alguns pontos da rede enquanto outros ficam ociosos. Medir essa pressão de forma contínua, e não em análises pontuais, é o centro do projeto. Os fluxos entre município de residência e município de internação também formam uma **rede**, permitindo aplicar métricas de redes complexas para identificar os pontos críticos do sistema.
 
-## Fontes de dados (previstas)
+## Fontes de dados
 
 | Fonte | Conteúdo |
 |---|---|
-| [InfoDengue](https://info.dengue.mat.br/) / [DATASUS – SINAN](https://datasus.saude.gov.br/) | Casos notificados de dengue por semana epidemiológica |
-| [INMET](https://portal.inmet.gov.br/) | Dados meteorológicos da estação de Fortaleza |
+| [DATASUS – SIH/SUS](https://datasus.saude.gov.br/transferencia-de-arquivos/) | Autorizações de Internação Hospitalar (AIH) do Ceará, publicadas mensalmente |
+| [DATASUS – CNES](https://datasus.saude.gov.br/transferencia-de-arquivos/) | Cadastro de estabelecimentos e leitos hospitalares |
+
+Os arquivos são baixados diretamente do servidor FTP do DATASUS, no formato `.dbc`, e convertidos para tabelas com a biblioteca `pyreaddbc`.
+
+## Como o pipeline funciona
+
+```
+[DATASUS] → Extração → Transformação → Armazenamento → Relatório
+               ↑                                           │
+               └──────── Orquestração (agendada) ──────────┘
+```
+
+| Etapa | Responsabilidade |
+|---|---|
+| **Extração** | Baixa os arquivos mensais do FTP do DATASUS, com cache e tratamento de falhas |
+| **Transformação** | Limpa, padroniza e calcula os indicadores |
+| **Armazenamento** | Grava os resultados de forma idempotente, mantendo o histórico |
+| **Relatório** | Gera gráficos e resumos atualizados automaticamente |
+| **Orquestração** | Executa o pipeline periodicamente via GitHub Actions |
+
+## Indicadores previstos
+
+- Volume de internações por município de residência e de ocorrência
+- Tempo médio de permanência hospitalar
+- Taxa de evasão: proporção de pacientes internados fora do município onde moram
+- Relação entre internações e leitos disponíveis
+- Rede de fluxo intermunicipal de pacientes e seus municípios mais centrais
 
 ## Estrutura do projeto
 
 ```
-dengue-clima-fortaleza/
+radar-hospitalar-ce/
+├── src/radar/
+│   ├── extract.py      # coleta dos dados no DATASUS
+│   ├── transform.py    # limpeza e cálculo de indicadores
+│   ├── load.py         # armazenamento dos resultados
+│   └── report.py       # geração de gráficos e relatórios
 ├── data/
-│   ├── raw/          # dados originais, nunca editados manualmente
-│   └── processed/    # dados limpos e integrados, gerados por código
-├── notebooks/        # análises exploratórias e experimentos
-├── src/              # código reutilizável (coleta, limpeza, features, modelos)
-├── models/           # modelos treinados
-├── reports/
-│   └── figures/      # gráficos e visualizações
+│   ├── raw/            # arquivos originais baixados, nunca editados manualmente
+│   └── processed/      # dados tratados, gerados por código
+├── tests/              # testes automatizados
 ├── requirements.txt
 └── README.md
 ```
@@ -34,22 +61,36 @@ dengue-clima-fortaleza/
 ## Tecnologias
 
 - Python
-- pandas e NumPy
-- scikit-learn
-- Matplotlib e Seaborn
-- Jupyter
+- pandas
+- pyreaddbc
+- SQLite
+- GitHub Actions
 
-##  Como executar
+## Como executar
 
 ```bash
-git clone https://github.com/Hasten-Coubath/dengue-clima-fortaleza.git
-cd dengue-clima-fortaleza
+git clone https://github.com/Hasten-Coubath/radar-hospitalar-ce.git
+cd radar-hospitalar-ce
 
 python -m venv .venv
 source .venv/bin/activate      # Windows: .venv\Scripts\activate
 
 pip install -r requirements.txt
 ```
+
+Os comandos para rodar o pipeline serão adicionados conforme as etapas forem implementadas.
+
+## Roadmap
+
+- [x] Estrutura inicial do projeto
+- [ ] Extração de um mês de internações do SIH/SUS
+- [ ] Limpeza dos dados e primeiro indicador
+- [ ] Armazenamento em banco de dados local
+- [ ] Geração automática de relatório
+- [ ] Execução agendada com GitHub Actions
+- [ ] Série histórica, dados de leitos (CNES) e alertas
+- [ ] Rede de fluxo intermunicipal de pacientes
+- [ ] Dashboard interativo
 
 ## 👤 Autor
 
